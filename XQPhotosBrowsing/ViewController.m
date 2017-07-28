@@ -7,6 +7,7 @@
 //
 
 #import "ViewController.h"
+#import "XQBigImageViewController.h"
 
 @interface ViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout>
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
@@ -26,8 +27,8 @@
 
 - (void)initPhotosData
 {
-    NSArray *arrayPhotosName = @[@"1.jpg", @"2.jpg", @"3.jpg", @"4.gif", @"5.jpg", @"6.gif", @"7.gif", @"8.jpg", @"9.jpeg", @"10.jpg", @"11.jpg", @"12.jpg"];
-    
+    NSArray *arrayPhotosName = @[@"1.jpg", @"2.jpg", @"3.jpg", @"5.jpg", @"8.jpg", @"9.jpeg", @"10.jpg", @"11.jpg", @"12.jpg"];
+    self.arrayPhotos = [NSMutableArray arrayWithArray:arrayPhotosName];
 }
 
 - (void)initCollectionView
@@ -49,8 +50,8 @@
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
-    return 24;
-//    return [self.arrayPhotos count];
+//    return 24;
+    return [self.arrayPhotos count];
 }
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
@@ -71,8 +72,33 @@
     {
         cell = [[UICollectionViewCell alloc] init];
     }
-    cell.backgroundColor = [UIColor colorWithRed:((10 * indexPath.row) / 255.0) green:((20 * indexPath.row) / 255.0) blue:((30 * indexPath.row) / 255.0) alpha:1.0f];
+//    cell.backgroundColor = [UIColor colorWithRed:((10 * indexPath.row) / 255.0) green:((20 * indexPath.row) / 255.0) blue:((30 * indexPath.row) / 255.0) alpha:1.0f];
+    if (indexPath.row < [self.arrayPhotos count])
+    {
+        NSString *imagename = self.arrayPhotos[indexPath.row];
+        if ([[[imagename pathExtension] lowercaseString] isEqualToString:@"gif"])
+        {
+            NSData *gif = [NSData dataWithContentsOfFile: [[NSBundle mainBundle] pathForResource:imagename ofType:@"gif"]];
+            UIWebView *webView = [[UIWebView alloc] initWithFrame:cell.bounds];
+            webView.userInteractionEnabled = NO;
+            [webView loadData:gif MIMEType:@"image/gif" textEncodingName:nil baseURL:nil];
+            [cell addSubview:webView];
+        }
+        else
+        {
+            UIImageView *image = [[UIImageView alloc] initWithFrame:cell.bounds];
+            [image setImage:[UIImage imageNamed:self.arrayPhotos[indexPath.row]]];
+            [cell addSubview:image];
+        }
+    }
     return cell;
+}
+
+- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    XQBigImageViewController *bigVC = [[XQBigImageViewController alloc] init];
+    [bigVC setImageArray:self.arrayPhotos];
+    [bigVC setCurrentIndex:indexPath.row];
+    [self presentViewController:bigVC animated:YES completion:nil];
 }
 
 #pragma mark - Getter

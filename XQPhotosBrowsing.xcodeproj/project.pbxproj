@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CB0C08A91F2AC8930029100C /* XQBigImageViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CB0C08A81F2AC8930029100C /* XQBigImageViewController.m */; };
+		CB0C08AC1F2AC95D0029100C /* XQImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = CB0C08AB1F2AC95D0029100C /* XQImageView.m */; };
 		CB4EA5811F276113006EEA61 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CB4EA5801F276113006EEA61 /* main.m */; };
 		CB4EA5841F276113006EEA61 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CB4EA5831F276113006EEA61 /* AppDelegate.m */; };
 		CB4EA5871F276113006EEA61 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CB4EA5861F276113006EEA61 /* ViewController.m */; };
@@ -28,6 +30,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		CB0C08A71F2AC8930029100C /* XQBigImageViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XQBigImageViewController.h; sourceTree = "<group>"; };
+		CB0C08A81F2AC8930029100C /* XQBigImageViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XQBigImageViewController.m; sourceTree = "<group>"; };
+		CB0C08AA1F2AC95D0029100C /* XQImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XQImageView.h; sourceTree = "<group>"; };
+		CB0C08AB1F2AC95D0029100C /* XQImageView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XQImageView.m; sourceTree = "<group>"; };
 		CB4EA57C1F276113006EEA61 /* XQPhotosBrowsing.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XQPhotosBrowsing.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB4EA5801F276113006EEA61 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		CB4EA5821F276113006EEA61 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -108,6 +114,10 @@
 		CB4EA5961F281DD8006EEA61 /* PhotosBrowsing */ = {
 			isa = PBXGroup;
 			children = (
+				CB0C08A71F2AC8930029100C /* XQBigImageViewController.h */,
+				CB0C08A81F2AC8930029100C /* XQBigImageViewController.m */,
+				CB0C08AA1F2AC95D0029100C /* XQImageView.h */,
+				CB0C08AB1F2AC95D0029100C /* XQImageView.m */,
 			);
 			path = PhotosBrowsing;
 			sourceTree = "<group>";
@@ -217,6 +227,8 @@
 			files = (
 				CB4EA5871F276113006EEA61 /* ViewController.m in Sources */,
 				CB4EA5841F276113006EEA61 /* AppDelegate.m in Sources */,
+				CB0C08AC1F2AC95D0029100C /* XQImageView.m in Sources */,
+				CB0C08A91F2AC8930029100C /* XQBigImageViewController.m in Sources */,
 				CB4EA5811F276113006EEA61 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -378,6 +390,7 @@
 				CB4EA5951F276113006EEA61 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
