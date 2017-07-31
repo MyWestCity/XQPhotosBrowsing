@@ -7,17 +7,22 @@
 //
 
 #import "XQImageView.h"
+#import "XPQGifView.h"
 
-@interface XQImageView ()
+@interface XQImageView ()<UIGestureRecognizerDelegate>
 {
     ImageType _imageType;       //图片来源类型
     NSInteger _index;           //图片要显示的位置
     UIImage *_image;            //图片对象
-    NSString *_imageName;       //图片名
+    CGFloat _lastScale;         //上次的缩放
+    NSData *_gifData;           //GIF图片资源
+    bool _isShow;
 }
+@property (nonatomic,strong) XPQGifView *gifView;
 @end
 
 @implementation XQImageView
+@synthesize isShow = _isShow;
 
 #pragma mark - ----------Life Cycle
 - (instancetype)init{
@@ -25,13 +30,39 @@
     if (self)
     {
         _imageType = TypeImageName;
+        _lastScale = 1.0;
+        _index = 0;
+        _isShow = false;
+        self.userInteractionEnabled = YES;
+        UIPinchGestureRecognizer *pinchRecognizer = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(zoomImage:)];
+        pinchRecognizer.delegate = self;
+//        [self addGestureRecognizer:pinchRecognizer];
     }
     return self;
 }
 
+#pragma mark - ----------GestureRecognizer的代理方法
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    return ![gestureRecognizer isKindOfClass:[UIPanGestureRecognizer class]];
+}
+
+- (void)zoomImage:(id)sender{
+    if ([(UIPinchGestureRecognizer *)sender state] == UIGestureRecognizerStateEnded)
+    {
+        _lastScale = 1.0;
+        return;
+    }
+    
+    CGFloat scale = 1.0 - (_lastScale - [(UIPinchGestureRecognizer *)sender scale]);
+    CGAffineTransform currentTransform = [(UIPinchGestureRecognizer *)sender view].transform;
+    CGAffineTransform newTransform = CGAffineTransformScale(currentTransform, scale, scale);
+    [[(UIPinchGestureRecognizer *)sender view]setTransform:newTransform];
+    _lastScale = [(UIPinchGestureRecognizer *)sender scale];
+}
+
 #pragma mark - ----------External Interface
 - (void)setImage:(id)image atIndex:(NSInteger)index{
-    _index = index;
+//    _index = index;
     if ([image isKindOfClass:[UIImage class]])
     {
         //传过来的是UIImage对象
@@ -46,7 +77,13 @@
         {
             //传过来的是本地GIF图片名
             _imageType = TypeImageGIFName;
-            _imageName = imagename;
+            NSData *gifData = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:imagename ofType:nil]];
+            if (gifData != nil)
+            {
+                _gifData = gifData;
+            }
+            _image = [UIImage imageNamed:imagename];
+            [self setNormalImage];
         }
         else
         {
@@ -58,31 +95,56 @@
     }
     else if ([image isKindOfClass:[NSURL class]])
     {
-        NSString *imagename = [NSString stringWithContentsOfURL:image encoding:NSUTF8StringEncoding error:nil];
-        if ([[imagename.pathExtension lowercaseString] isEqualToString:@"gif"])
-        {
-            //传过来的是GIF图片的URL
-            _imageType = TypeImageGIFURL;
-        }
-        else
-        {
-            //传过来的是普通图片的URL
-            _imageType = TypeImageURL;
-            dispatch_async(dispatch_queue_create("com.xuqian.image", DISPATCH_QUEUE_CONCURRENT), ^{
-                NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:imagename]];
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if (data != nil)
-                    {
-                        _image = [UIImage imageWithData:data];
-                        [self setNormalImage];
-                    }
-                });
+        dispatch_async(dispatch_queue_create("com.xuqian.image", DISPATCH_QUEUE_CONCURRENT), ^{
+            __block NSData *data = [NSData dataWithContentsOfURL:(NSURL *)image];
+            dispatch_sync(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                while (data == nil)
+                {
+                    data = [NSData dataWithContentsOfURL:(NSURL *)image];
+                }
             });
-        }
-        _imageName = imagename;
+            
+            dispatch_sync(dispatch_get_main_queue(), ^{
+                
+                if (data != nil)
+                {
+                    _image = [UIImage imageWithData:data];
+                    NSString *imageType = [self contentTypeForImageData:data];
+                    if ([[imageType lowercaseString] isEqualToString:@"gif"])
+                    {
+                        _imageType = TypeImageGIFURL;
+                        _gifData = data;
+                    }
+                    else
+                    {
+                        _imageType = TypeImageURL;
+                    }
+                    [self setNormalImage];
+                }
+            });
+        });
     }
     else
         return;
+}
+
+- (void)startGifImage{
+    if (self.gifView && self.gifView.gifData)
+    {
+        [self.gifView start];
+    }
+}
+
+- (void)suspendGifImage{
+    if (self.gifView && self.gifView.gifData)
+    {
+        [self.gifView suspend];
+    }
+}
+
+- (ImageType)getImageType
+{
+    return _imageType;
 }
 
 #pragma mark - ----------Private Methods
@@ -126,13 +188,74 @@
             }
         }
         self.frame = CGRectMake(0, 0, width, height);
-        self.center = CGPointMake(WINDOW_SCREEN_HEIGHT*_index + WINDOW_SCREEN_WIDTH/2.0, WINDOW_SCREEN_HEIGHT/2.0);
-        [self setImage:_image];
+//        self.center = CGPointMake(WINDOW_SCREEN_HEIGHT*_index + WINDOW_SCREEN_WIDTH/2.0, WINDOW_SCREEN_HEIGHT/2.0);
+        if ((_imageType == TypeImageName) || (_imageType == TypeImageObject) || (_imageType == TypeImageURL))
+        {
+            [self setImage:_image];
+        }
+        else
+        {
+            if (_gifData != nil)
+            {
+                 self.gifView = [[XPQGifView alloc] initWithGifData:_gifData];
+                self.gifView.frame = self.bounds;
+                [self addSubview:self.gifView];
+                [self.gifView start];
+            }
+        }
     }
 }
 
-- (void)setGIFImage{
+#pragma mark -- 判断网络图片的类型
+- (NSString *)contentTypeForImageData:(NSData *)data {
+    
+    uint8_t c;
+    
+    [data getBytes:&c length:1];
+    
+    switch (c) {
+            
+        case 0xFF:
+            
+            return @"jpeg";
+            
+        case 0x89:
+            
+            return @"png";
+            
+        case 0x47:
+            
+            return @"gif";
+            
+        case 0x49:
+            
+        case 0x4D:
+            
+            return @"tiff";
+            
+        case 0x52:
+            
+            if ([data length] < 12) {
+                
+                return nil;
+                
+            }
+            
+            NSString *testString = [[NSString alloc] initWithData:[data subdataWithRange:NSMakeRange(0, 12)] encoding:NSASCIIStringEncoding];
+            
+            if ([testString hasPrefix:@"RIFF"] && [testString hasSuffix:@"WEBP"]) {
+                
+                return @"webp";
+                
+            }
+            
+            return nil;
+            
+    }
+    
+    return nil;
     
 }
+
 
 @end

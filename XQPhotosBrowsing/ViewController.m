@@ -27,7 +27,7 @@
 
 - (void)initPhotosData
 {
-    NSArray *arrayPhotosName = @[@"1.jpg", @"2.jpg", @"3.jpg", @"5.jpg", @"8.jpg", @"9.jpeg", @"10.jpg", @"11.jpg", @"12.jpg"];
+    NSArray *arrayPhotosName = @[@"1.jpg", @"2.jpg", @"3.jpg", @"4.gif", @"5.jpg", @"6.gif", @"7.gif", @"8.jpg", @"9.jpeg", @"10.jpg", @"11.jpg", @"12.jpg"];
     self.arrayPhotos = [NSMutableArray arrayWithArray:arrayPhotosName];
 }
 
@@ -50,7 +50,6 @@
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
-//    return 24;
     return [self.arrayPhotos count];
 }
 
@@ -72,7 +71,6 @@
     {
         cell = [[UICollectionViewCell alloc] init];
     }
-//    cell.backgroundColor = [UIColor colorWithRed:((10 * indexPath.row) / 255.0) green:((20 * indexPath.row) / 255.0) blue:((30 * indexPath.row) / 255.0) alpha:1.0f];
     if (indexPath.row < [self.arrayPhotos count])
     {
         NSString *imagename = self.arrayPhotos[indexPath.row];

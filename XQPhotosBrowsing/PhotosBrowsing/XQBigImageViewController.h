@@ -11,16 +11,14 @@
 @interface XQBigImageViewController : UIViewController
 
 /**
- *  descrption : 设置要显示的图片数组
- *  parameter  : 
- *          array : 图片数组（本地图片名、图片URL、UIimage对象）
+ *  brief  设置要显示的图片数组
+ *  parame  array  图片数组（本地图片名、图片URL、UIimage对象）
  */
 - (void)setImageArray:(NSArray *)array;
 
 /**
- *  descrption : 设置第一次打开要显示的图片下标
- *  parameter  : 
- *          index : 图片下标
+ *  brief  设置第一次打开要显示的图片下标
+ *  parame  index  图片下标
  */
 - (void)setCurrentIndex:(NSInteger)index;
 @end

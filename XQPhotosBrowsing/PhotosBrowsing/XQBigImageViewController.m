@@ -62,6 +62,7 @@
     {
         [self.mainScrollView setContentOffset:CGPointMake(WINDOW_SCREEN_WIDTH, 0)];
     }
+    [self checkImageState];
 }
 
 #pragma mark -- 刷新UI界面
@@ -86,13 +87,16 @@
         /**
             右移另两张图片
          */
-        for (XQImageView *imageView in self.arrayTempImage)
+        if (_currentIndex > 0)
         {
-            if (imageView)
+            for (XQImageView *imageView in self.arrayTempImage)
             {
-                CGRect frame = imageView.frame;
-                frame.origin.x += WINDOW_SCREEN_WIDTH;
-                imageView.frame = frame;
+                if (imageView)
+                {
+                    CGRect frame = imageView.frame;
+                    frame.origin.x += WINDOW_SCREEN_WIDTH;
+                    imageView.frame = frame;
+                }
             }
         }
         
@@ -130,13 +134,16 @@
         /**
             左移另两张图片
          */
-        for (XQImageView *imageView in self.arrayTempImage)
+        if (_currentIndex > 1)
         {
-            if (imageView)
+            for (XQImageView *imageView in self.arrayTempImage)
             {
-                CGRect frame = imageView.frame;
-                frame.origin.x -= WINDOW_SCREEN_WIDTH;
-                imageView.frame = frame;
+                if (imageView)
+                {
+                    CGRect frame = imageView.frame;
+                    frame.origin.x -= WINDOW_SCREEN_WIDTH;
+                    imageView.frame = frame;
+                }
             }
         }
         
@@ -154,7 +161,8 @@
     }
     
     _lastIndex = _currentIndex;
-    
+    [self.mainScrollView setContentSize:CGSizeMake([self.arrayTempImage count]*WINDOW_SCREEN_WIDTH, 0)];
+
     if (_currentIndex == 0)
     {
         [self.mainScrollView setContentOffset:CGPointMake(0, 0)];
@@ -163,7 +171,7 @@
     {
         [self.mainScrollView setContentOffset:CGPointMake(WINDOW_SCREEN_WIDTH, 0)];
     }
-    [self.mainScrollView setContentSize:CGSizeMake([self.arrayTempImage count]*WINDOW_SCREEN_WIDTH, 0)];
+    [self checkImageState];
 }
 
 #pragma mark - ----------ScrollView的代理方法
@@ -194,6 +202,47 @@
 {
     _currentIndex = index;
     _lastIndex = _currentIndex;
+}
+
+#pragma mark - ----------Private Methods
+- (void)checkImageState{
+    for (XQImageView *image in self.arrayTempImage)
+    {
+        image.isShow = NO;
+    }
+    
+    if (_currentIndex == 0)
+    {
+        if ([self.arrayTempImage count] == 2)
+        {
+            XQImageView *image = [self.arrayTempImage firstObject];
+            image.isShow = YES;
+        }
+    }
+    else
+    {
+        if ([self.arrayTempImage count] >= 2)
+        {
+            XQImageView *image = self.arrayTempImage[1];
+            image.isShow = YES;
+        }
+    }
+    
+    for (XQImageView *image in self.arrayTempImage)
+    {
+        if (([image getImageType] == TypeImageGIFName) || ([image getImageType] == TypeImageGIFURL))
+        {
+            //该图片是GIF图片，则判断是否需要开始GIF动画
+            if (image.isShow)
+            {
+                [image startGifImage];
+            }
+            else
+            {
+                [image suspendGifImage];
+            }
+        }
+    }
 }
 
 #pragma mark - ----------Getter
