@@ -62,7 +62,7 @@
 
 #pragma mark - ----------External Interface
 - (void)setImage:(id)image atIndex:(NSInteger)index{
-//    _index = index;
+    _index = index;
     if ([image isKindOfClass:[UIImage class]])
     {
         //传过来的是UIImage对象
@@ -95,34 +95,54 @@
     }
     else if ([image isKindOfClass:[NSURL class]])
     {
-        dispatch_async(dispatch_queue_create("com.xuqian.image", DISPATCH_QUEUE_CONCURRENT), ^{
-            __block NSData *data = [NSData dataWithContentsOfURL:(NSURL *)image];
-            dispatch_sync(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                while (data == nil)
-                {
-                    data = [NSData dataWithContentsOfURL:(NSURL *)image];
-                }
-            });
-            
-            dispatch_sync(dispatch_get_main_queue(), ^{
-                
-                if (data != nil)
-                {
-                    _image = [UIImage imageWithData:data];
-                    NSString *imageType = [self contentTypeForImageData:data];
-                    if ([[imageType lowercaseString] isEqualToString:@"gif"])
+        NSString *imagePath = [NSHomeDirectory() stringByAppendingString:[NSString stringWithFormat:@"/Documents/%@", [image lastPathComponent]]];
+        
+        //从沙盒下的缓存目录查找图片，未找到则进行网络获取
+        NSData *tempData = [NSData dataWithContentsOfFile:imagePath];
+        if (tempData != nil)
+        {
+            _image = [UIImage imageWithData:tempData];
+            NSString *tempImageType = [self contentTypeForImageData:tempData];
+            if ([[tempImageType lowercaseString] isEqualToString:@"gif"])
+            {
+                _imageType = TypeImageGIFURL;
+                _gifData = tempData;
+            }
+            else
+            {
+                _imageType = TypeImageURL;
+            }
+            [self setNormalImage];
+        }
+        else
+        {
+            dispatch_async(dispatch_queue_create("com.xuqian.image", DISPATCH_QUEUE_CONCURRENT), ^{
+                NSError *error;
+                __block NSData *data = [NSURLConnection sendSynchronousRequest:[NSURLRequest requestWithURL:(NSURL *)image] returningResponse:NULL error:&error];
+
+                dispatch_sync(dispatch_get_main_queue(), ^{
+                    
+                    if (data != nil)
                     {
-                        _imageType = TypeImageGIFURL;
-                        _gifData = data;
+                        _image = [UIImage imageWithData:data];
+                        NSString *imageType = [self contentTypeForImageData:data];
+                        if ([[imageType lowercaseString] isEqualToString:@"gif"])
+                        {
+                            _imageType = TypeImageGIFURL;
+                            _gifData = data;
+                        }
+                        else
+                        {
+                            _imageType = TypeImageURL;
+                        }
+                        [self setNormalImage];
+                        
+                        //缓存下载的图片到沙盒下的cache目录
+                        [data writeToFile:imagePath atomically:YES];
                     }
-                    else
-                    {
-                        _imageType = TypeImageURL;
-                    }
-                    [self setNormalImage];
-                }
+                });
             });
-        });
+        }
     }
     else
         return;
@@ -187,8 +207,9 @@
                 }
             }
         }
+        
         self.frame = CGRectMake(0, 0, width, height);
-//        self.center = CGPointMake(WINDOW_SCREEN_HEIGHT*_index + WINDOW_SCREEN_WIDTH/2.0, WINDOW_SCREEN_HEIGHT/2.0);
+        self.center = CGPointMake(WINDOW_SCREEN_WIDTH*_index + WINDOW_SCREEN_WIDTH/2.0, WINDOW_SCREEN_HEIGHT/2.0);
         if ((_imageType == TypeImageName) || (_imageType == TypeImageObject) || (_imageType == TypeImageURL))
         {
             [self setImage:_image];

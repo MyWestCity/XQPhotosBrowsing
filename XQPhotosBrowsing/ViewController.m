@@ -27,7 +27,7 @@
 
 - (void)initPhotosData
 {
-    NSArray *arrayPhotosName = @[@"1.jpg", @"2.jpg", @"3.jpg", @"4.gif", @"5.jpg", @"6.gif", @"7.gif", @"8.jpg", @"9.jpeg", @"10.jpg", @"11.jpg", @"12.jpg"];
+    NSArray *arrayPhotosName = @[@"1.jpg", @"2.jpg", @"3.jpg", @"4.gif", @"5.jpg", @"6.gif", @"7.gif", @"8.jpg", @"9.jpeg", @"10.jpg", @"11.jpg", @"12.jpg", [NSURL URLWithString:@"http://pic27.nipic.com/20130319/11935511_225831392000_2.jpg"], [NSURL URLWithString:@"http://img.taopic.com/uploads/allimg/140326/235113-1403260U22059.jpg"], [NSURL URLWithString:@"http://img1.3lian.com/2015/w7/85/d/21.jpg"], [NSURL URLWithString:@"http://pic11.nipic.com/20101215/3400947_015953693504_2.jpg"], [NSURL URLWithString:@"http://img.zcool.cn/community/01bdab577b6aa70000012e7ee9bd01.gif"], [NSURL URLWithString:@"http://img0.imgtn.bdimg.com/it/u=1943237929,2264099994&fm=214&gp=0.jpg"]];
     self.arrayPhotos = [NSMutableArray arrayWithArray:arrayPhotosName];
 }
 
@@ -50,7 +50,7 @@
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
-    return [self.arrayPhotos count];
+    return 12;
 }
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath

@@ -27,6 +27,14 @@
     // Do any additional setup after loading the view.
     
     [self configUI];
+    UIButton *clearButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    clearButton.frame = CGRectMake(50, 50, 100, 30);
+    clearButton.backgroundColor = [UIColor whiteColor];
+    [clearButton addTarget:self action:@selector(clearFile) forControlEvents:UIControlEventTouchUpInside];
+    [clearButton setTitle:@"清除缓存" forState:UIControlStateNormal];
+    [clearButton setTitleColor:[UIColor greenColor] forState:UIControlStateNormal];
+    [self.view addSubview:clearButton];
+
 }
 
 - (void)configUI{
@@ -202,6 +210,26 @@
 {
     _currentIndex = index;
     _lastIndex = _currentIndex;
+}
+
+
+#pragma mark - ----------Event Response
+- (void)clearFile
+{
+    NSString * cachePath = [NSSearchPathForDirectoriesInDomains (NSDocumentDirectory , NSUserDomainMask , YES ) firstObject];
+    NSArray * files = [[NSFileManager defaultManager ] subpathsAtPath :cachePath];
+    NSLog ( @"cachpath = %@" , cachePath);
+    for ( NSString * p in files) {
+        
+        NSError * error = nil ;
+        //获取文件全路径
+        NSString * fileAbsolutePath = [cachePath stringByAppendingPathComponent :p];
+        
+        if ([[NSFileManager defaultManager ] fileExistsAtPath :fileAbsolutePath]) {
+            [[NSFileManager defaultManager ] removeItemAtPath :fileAbsolutePath error :&error];
+        }
+    }
+    
 }
 
 #pragma mark - ----------Private Methods
