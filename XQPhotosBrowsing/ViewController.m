@@ -23,11 +23,19 @@
     // Do any additional setup after loading the view, typically from a nib.
     [self initPhotosData];
     [self initCollectionView];
+    
+    UIButton *clearButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    clearButton.frame = CGRectMake(50, 50, 100, 30);
+    clearButton.backgroundColor = [UIColor whiteColor];
+    [clearButton addTarget:self action:@selector(clearFile) forControlEvents:UIControlEventTouchUpInside];
+    [clearButton setTitle:@"清除缓存" forState:UIControlStateNormal];
+    [clearButton setTitleColor:[UIColor greenColor] forState:UIControlStateNormal];
+    [self.view addSubview:clearButton];
 }
 
 - (void)initPhotosData
 {
-    NSArray *arrayPhotosName = @[@"1.jpg", @"2.jpg", @"3.jpg", @"4.gif", @"5.jpg", @"6.gif", @"7.gif", @"8.jpg", @"9.jpeg", @"10.jpg", @"11.jpg", @"12.jpg", [NSURL URLWithString:@"http://pic27.nipic.com/20130319/11935511_225831392000_2.jpg"], [NSURL URLWithString:@"http://img.taopic.com/uploads/allimg/140326/235113-1403260U22059.jpg"], [NSURL URLWithString:@"http://img1.3lian.com/2015/w7/85/d/21.jpg"], [NSURL URLWithString:@"http://pic11.nipic.com/20101215/3400947_015953693504_2.jpg"], [NSURL URLWithString:@"http://img.zcool.cn/community/01bdab577b6aa70000012e7ee9bd01.gif"], [NSURL URLWithString:@"http://img0.imgtn.bdimg.com/it/u=1943237929,2264099994&fm=214&gp=0.jpg"]];
+    NSArray *arrayPhotosName = @[@"1.jpg", @"2.jpg", @"3.jpg", @"4.gif", @"5.jpg", @"6.gif", @"7.gif", @"8.jpg", @"9.jpeg", @"10.jpg", @"11.jpg", @"12.jpg", @"http://pic27.nipic.com/20130319/11935511_225831392000_2.jpg", [NSURL URLWithString:@"http://img.taopic.com/uploads/allimg/140326/235113-1403260U22059.jpg"], [NSURL URLWithString:@"http://img1.3lian.com/2015/w7/85/d/21.jpg"], @"http://pic11.nipic.com/20101215/3400947_015953693504_2.jpg", @"http://img.zcool.cn/community/01bdab577b6aa70000012e7ee9bd01.gif"];
     self.arrayPhotos = [NSMutableArray arrayWithArray:arrayPhotosName];
 }
 
@@ -76,11 +84,11 @@
         NSString *imagename = self.arrayPhotos[indexPath.row];
         if ([[[imagename pathExtension] lowercaseString] isEqualToString:@"gif"])
         {
-            NSData *gif = [NSData dataWithContentsOfFile: [[NSBundle mainBundle] pathForResource:imagename ofType:@"gif"]];
-            UIWebView *webView = [[UIWebView alloc] initWithFrame:cell.bounds];
-            webView.userInteractionEnabled = NO;
-            [webView loadData:gif MIMEType:@"image/gif" textEncodingName:nil baseURL:nil];
-            [cell addSubview:webView];
+//            NSData *gif = [NSData dataWithContentsOfFile: [[NSBundle mainBundle] pathForResource:imagename ofType:@"gif"]];
+//            UIWebView *webView = [[UIWebView alloc] initWithFrame:cell.bounds];
+//            webView.userInteractionEnabled = NO;
+//            [webView loadData:gif MIMEType:@"image/gif" textEncodingName:nil baseURL:nil];
+//            [cell addSubview:webView];
         }
         else
         {
@@ -97,6 +105,25 @@
     [bigVC setImageArray:self.arrayPhotos];
     [bigVC setCurrentIndex:indexPath.row];
     [self presentViewController:bigVC animated:YES completion:nil];
+}
+
+#pragma mark - ----------Event Response
+- (void)clearFile
+{
+    NSString * cachePath = [NSSearchPathForDirectoriesInDomains (NSDocumentDirectory , NSUserDomainMask , YES ) firstObject];
+    NSArray * files = [[NSFileManager defaultManager ] subpathsAtPath :cachePath];
+    NSLog ( @"cachpath = %@" , cachePath);
+    for ( NSString * p in files) {
+
+        NSError * error = nil ;
+        //获取文件全路径
+        NSString * fileAbsolutePath = [cachePath stringByAppendingPathComponent :p];
+
+        if ([[NSFileManager defaultManager ] fileExistsAtPath :fileAbsolutePath]) {
+            [[NSFileManager defaultManager ] removeItemAtPath :fileAbsolutePath error :&error];
+        }
+    }
+
 }
 
 #pragma mark - Getter

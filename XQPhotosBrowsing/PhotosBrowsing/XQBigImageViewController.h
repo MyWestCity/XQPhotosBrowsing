@@ -18,7 +18,7 @@
 
 /**
  *  brief  设置第一次打开要显示的图片下标
- *  parame  index  图片下标
+ *  parame  index  图片下标，默认是0
  */
 - (void)setCurrentIndex:(NSInteger)index;
 @end

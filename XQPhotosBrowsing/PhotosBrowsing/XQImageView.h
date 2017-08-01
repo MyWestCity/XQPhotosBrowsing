@@ -19,34 +19,12 @@ typedef NS_ENUM(NSUInteger, ImageType){
     TypeImageGIFURL         //gif图片地址
 };
 
-@interface XQImageView : UIImageView
-//-----当前图片是否正在显示的标志
-@property (nonatomic,assign) bool isShow;
+@interface XQImageView : UIView
 
 /**
  *  brief  设置要显示的图片
  *  param  image  图片对象（本地图片名、图片URL、UIimage对象）
- *  param  index  图片要显示的位置
  */
-- (void)setImage:(id)image atIndex:(NSInteger)index;
-
-/**
- *  brief  开始GIF动画
- *  param  nil
- */
-- (void)startGifImage;
-
-/**
- *  brief  暂停GIF动画节省资源
- *  param  nil
- */
-- (void)suspendGifImage;
-
-/**
- *  brief  获取当前图片的类型
- *  param  nil
- *  return 当前图片的类型
- */
-- (ImageType)getImageType;
+- (void)setViewImage:(id)image;
 
 @end

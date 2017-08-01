@@ -8,15 +8,14 @@
 
 #import "XQBigImageViewController.h"
 #import "XQImageView.h"
+#import "XQImageViewCell.h"
 
-@interface XQBigImageViewController ()<UIScrollViewDelegate>
+@interface XQBigImageViewController ()<UIScrollViewDelegate, UITableViewDelegate, UITableViewDataSource>
 {
     NSInteger _currentIndex;   //当前显示图片下标
-    NSInteger _lastIndex;      //上次显示的图片下标(用于判断是左滑还是右滑)
 }
 @property (nonatomic,strong) NSArray *arrayImage;
-@property (nonatomic,strong) UIScrollView *mainScrollView;
-@property (nonatomic,strong) NSMutableArray *arrayTempImage;    //临时存储的图片数组（最多三张）
+@property (nonatomic,strong) UITableView *mainTableView;;
 @end
 
 @implementation XQBigImageViewController
@@ -26,179 +25,28 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     
-    [self configUI];
-    UIButton *clearButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    clearButton.frame = CGRectMake(50, 50, 100, 30);
-    clearButton.backgroundColor = [UIColor whiteColor];
-    [clearButton addTarget:self action:@selector(clearFile) forControlEvents:UIControlEventTouchUpInside];
-    [clearButton setTitle:@"清除缓存" forState:UIControlStateNormal];
-    [clearButton setTitleColor:[UIColor greenColor] forState:UIControlStateNormal];
-    [self.view addSubview:clearButton];
-
+    [self.mainTableView reloadData];
 }
 
-- (void)configUI{
-    for (NSInteger i = _currentIndex - 1; i <= _currentIndex + 1; i++)
-    {
-        if ((i >= 0) && (i < [self.arrayImage count]))
-        {
-            XQImageView *imageView = [[XQImageView alloc] init];
-            if (_currentIndex == 0)
-            {
-                [imageView setImage:self.arrayImage[i] atIndex:i - _currentIndex];
-                imageView.center = CGPointMake(WINDOW_SCREEN_WIDTH*(i-_currentIndex) + WINDOW_SCREEN_WIDTH/2.0, WINDOW_SCREEN_HEIGHT/2.0);
-            }
-            else
-            {
-                [imageView setImage:self.arrayImage[i] atIndex:i - _currentIndex + 1];
-                imageView.center = CGPointMake(WINDOW_SCREEN_WIDTH*(i-_currentIndex+1) + WINDOW_SCREEN_WIDTH/2.0, WINDOW_SCREEN_HEIGHT/2.0);
-            }
-            [self.mainScrollView addSubview:imageView];
-            [self.arrayTempImage addObject:imageView];
-        }
-    }
-    
-    //设置 scrollView滚动宽度
-    [self.mainScrollView setContentSize:CGSizeMake([self.arrayTempImage count] * WINDOW_SCREEN_WIDTH, 0)];
-    
-    //设置 scrollView当前偏移位置
-    if (_currentIndex == 0)
-    {
-        [self.mainScrollView setContentOffset:CGPointMake(0, 0)];
-    }
-    else
-    {
-        [self.mainScrollView setContentOffset:CGPointMake(WINDOW_SCREEN_WIDTH, 0)];
-    }
-    [self checkImageState];
+#pragma mark - ----------TableView的代理方法
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return [self.arrayImage count];
 }
 
-#pragma mark -- 刷新UI界面
-- (void)updateUI{
-    if (_currentIndex < _lastIndex)
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    static NSString *identifier = @"imageViewCell";
+    XQImageViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];//[tableView dequeueReusableCellWithIdentifier:identifier];
+    if (nil == cell)
     {
-        //手指右滑
-        
-        /**
-            删除temparray的第三张图片
-         */
-        if ((_currentIndex + 2) < [self.arrayImage count])
-        {
-            XQImageView *imageView = self.arrayTempImage.lastObject;
-            if (imageView)
-            {
-                [imageView removeFromSuperview];
-                [self.arrayTempImage removeLastObject];
-            }
-        }
-        
-        /**
-            右移另两张图片
-         */
-        if (_currentIndex > 0)
-        {
-            for (XQImageView *imageView in self.arrayTempImage)
-            {
-                if (imageView)
-                {
-                    CGRect frame = imageView.frame;
-                    frame.origin.x += WINDOW_SCREEN_WIDTH;
-                    imageView.frame = frame;
-                }
-            }
-        }
-        
-        /**
-            添加第一张图片
-         */
-        if (((_currentIndex - 1) >= 0) && ((_currentIndex - 1) < [self.arrayImage count]))
-        {
-            XQImageView *imageView = [[XQImageView alloc] init];
-            [imageView setImage:self.arrayImage[_currentIndex - 1] atIndex:0];
-            imageView.center = CGPointMake(WINDOW_SCREEN_WIDTH/2.0, WINDOW_SCREEN_HEIGHT/2.0);
-            [self.mainScrollView addSubview:imageView];
-            [self.arrayTempImage insertObject:imageView atIndex:0];
-        }
-        
-        
-    }
-    else if (_currentIndex > _lastIndex)
-    {
-        //手指左滑
-        
-        /**
-            删除temporary的第一张图片
-         */
-        if (_currentIndex > 1)
-        {
-            XQImageView *imageView = self.arrayTempImage.firstObject;
-            if (imageView)
-            {
-                [imageView removeFromSuperview];
-                [self.arrayTempImage removeObjectAtIndex:0];
-            }
-        }
-        
-        /**
-            左移另两张图片
-         */
-        if (_currentIndex > 1)
-        {
-            for (XQImageView *imageView in self.arrayTempImage)
-            {
-                if (imageView)
-                {
-                    CGRect frame = imageView.frame;
-                    frame.origin.x -= WINDOW_SCREEN_WIDTH;
-                    imageView.frame = frame;
-                }
-            }
-        }
-        
-        /**
-            添加第三张图片
-         */
-        if ((_currentIndex + 1) < [self.arrayImage count])
-        {
-            XQImageView *imageView = [[XQImageView alloc] init];
-            [imageView setImage:self.arrayImage[_currentIndex + 1] atIndex:2];
-            imageView.center = CGPointMake(WINDOW_SCREEN_WIDTH*2 + WINDOW_SCREEN_WIDTH/2.0, WINDOW_SCREEN_HEIGHT/2.0);
-            [self.mainScrollView addSubview:imageView];
-            [self.arrayTempImage addObject:imageView];
-        }
+        cell = [[XQImageViewCell alloc] initWithStyle:UITableViewCellStyleDefault frame:CGRectMake(0, 0, self.mainTableView.frame.size.height, self.mainTableView.frame.size.width) reuseIdentifier:identifier];
+        cell.contentView.transform = CGAffineTransformMakeRotation(M_PI / 2);
     }
     
-    _lastIndex = _currentIndex;
-    [self.mainScrollView setContentSize:CGSizeMake([self.arrayTempImage count]*WINDOW_SCREEN_WIDTH, 0)];
-
-    if (_currentIndex == 0)
+    if (indexPath.row < [self.arrayImage count])
     {
-        [self.mainScrollView setContentOffset:CGPointMake(0, 0)];
+        [cell setImage:self.arrayImage[indexPath.row]];
     }
-    else
-    {
-        [self.mainScrollView setContentOffset:CGPointMake(WINDOW_SCREEN_WIDTH, 0)];
-    }
-    [self checkImageState];
-}
-
-#pragma mark - ----------ScrollView的代理方法
-- (void)scrollViewDidScroll:(UIScrollView *)scrollView{
-    if ((scrollView.contentOffset.x == 0) && _currentIndex != 0)
-    {
-        _currentIndex--;
-        [self updateUI];
-    }
-    else if ((scrollView.contentOffset.x == WINDOW_SCREEN_WIDTH) && _currentIndex == 0)
-    {
-        _currentIndex++;
-        [self updateUI];
-    }
-    else if (scrollView.contentOffset.x == WINDOW_SCREEN_WIDTH*2)
-    {
-        _currentIndex++;
-        [self updateUI];
-    }
+    return cell;
 }
 
 #pragma mark - ----------External Interface
@@ -209,68 +57,6 @@
 - (void)setCurrentIndex:(NSInteger)index
 {
     _currentIndex = index;
-    _lastIndex = _currentIndex;
-}
-
-
-#pragma mark - ----------Event Response
-- (void)clearFile
-{
-    NSString * cachePath = [NSSearchPathForDirectoriesInDomains (NSDocumentDirectory , NSUserDomainMask , YES ) firstObject];
-    NSArray * files = [[NSFileManager defaultManager ] subpathsAtPath :cachePath];
-    NSLog ( @"cachpath = %@" , cachePath);
-    for ( NSString * p in files) {
-        
-        NSError * error = nil ;
-        //获取文件全路径
-        NSString * fileAbsolutePath = [cachePath stringByAppendingPathComponent :p];
-        
-        if ([[NSFileManager defaultManager ] fileExistsAtPath :fileAbsolutePath]) {
-            [[NSFileManager defaultManager ] removeItemAtPath :fileAbsolutePath error :&error];
-        }
-    }
-    
-}
-
-#pragma mark - ----------Private Methods
-- (void)checkImageState{
-    for (XQImageView *image in self.arrayTempImage)
-    {
-        image.isShow = NO;
-    }
-    
-    if (_currentIndex == 0)
-    {
-        if ([self.arrayTempImage count] == 2)
-        {
-            XQImageView *image = [self.arrayTempImage firstObject];
-            image.isShow = YES;
-        }
-    }
-    else
-    {
-        if ([self.arrayTempImage count] >= 2)
-        {
-            XQImageView *image = self.arrayTempImage[1];
-            image.isShow = YES;
-        }
-    }
-    
-    for (XQImageView *image in self.arrayTempImage)
-    {
-        if (([image getImageType] == TypeImageGIFName) || ([image getImageType] == TypeImageGIFURL))
-        {
-            //该图片是GIF图片，则判断是否需要开始GIF动画
-            if (image.isShow)
-            {
-                [image startGifImage];
-            }
-            else
-            {
-                [image suspendGifImage];
-            }
-        }
-    }
 }
 
 #pragma mark - ----------Getter
@@ -282,25 +68,22 @@
     return _arrayImage;
 }
 
-- (UIScrollView *)mainScrollView{
-    if (!_mainScrollView)
+- (UITableView *)mainTableView{
+    if (!_mainTableView)
     {
-        _mainScrollView = [[UIScrollView alloc] init];
-        _mainScrollView.frame = CGRectMake(0, 0, WINDOW_SCREEN_WIDTH, WINDOW_SCREEN_HEIGHT);
-        _mainScrollView.backgroundColor = [UIColor blackColor];
-        _mainScrollView.delegate = self;
-        _mainScrollView.pagingEnabled = YES;
-        [self.view addSubview:_mainScrollView];
+        _mainTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, WINDOW_SCREEN_HEIGHT, WINDOW_SCREEN_WIDTH) style:UITableViewStylePlain];
+        _mainTableView.delegate = self;
+        _mainTableView.dataSource = self;
+        _mainTableView.backgroundColor = [UIColor blackColor];
+        _mainTableView.showsVerticalScrollIndicator = NO;
+        _mainTableView.transform = CGAffineTransformMakeRotation(-M_PI / 2);
+        _mainTableView.center = CGPointMake(WINDOW_SCREEN_WIDTH/2.0, WINDOW_SCREEN_HEIGHT/2.0);
+        _mainTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+        _mainTableView.rowHeight = WINDOW_SCREEN_WIDTH;
+        _mainTableView.pagingEnabled = YES;
+        [self.view addSubview:_mainTableView];
     }
-    return _mainScrollView;
-}
-
-- (NSMutableArray *)arrayTempImage{
-    if (!_arrayTempImage)
-    {
-        _arrayTempImage = [NSMutableArray array];
-    }
-    return _arrayTempImage;
+    return _mainTableView;
 }
 
 #pragma mark -

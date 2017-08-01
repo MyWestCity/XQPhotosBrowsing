@@ -9,20 +9,23 @@
 #import "XQImageView.h"
 #import "XPQGifView.h"
 
-@interface XQImageView ()<UIGestureRecognizerDelegate>
+#define HandDoubleTap 2
+#define HandOneTap 1
+#define MaxZoomScaleNum 5.0
+#define MinZoomScaleNum 1.0
+
+@interface XQImageView ()<UIScrollViewDelegate>
 {
     ImageType _imageType;       //图片来源类型
-    NSInteger _index;           //图片要显示的位置
     UIImage *_image;            //图片对象
-    CGFloat _lastScale;         //上次的缩放
     NSData *_gifData;           //GIF图片资源
-    bool _isShow;
+    XPQGifView *_gifView;       //gif视图
+    UIImageView *_imageView;    //普通图片视图
 }
-@property (nonatomic,strong) XPQGifView *gifView;
+@property (nonatomic,strong) UIScrollView *scrollView;
 @end
 
 @implementation XQImageView
-@synthesize isShow = _isShow;
 
 #pragma mark - ----------Life Cycle
 - (instancetype)init{
@@ -30,144 +33,125 @@
     if (self)
     {
         _imageType = TypeImageName;
-        _lastScale = 1.0;
-        _index = 0;
-        _isShow = false;
-        self.userInteractionEnabled = YES;
-        UIPinchGestureRecognizer *pinchRecognizer = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(zoomImage:)];
-        pinchRecognizer.delegate = self;
-//        [self addGestureRecognizer:pinchRecognizer];
+        [self addGesture];
     }
     return self;
 }
 
-#pragma mark - ----------GestureRecognizer的代理方法
-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
-    return ![gestureRecognizer isKindOfClass:[UIPanGestureRecognizer class]];
+- (instancetype)initWithFrame:(CGRect)frame{
+    self = [super initWithFrame:frame];
+    if (self)
+    {
+        _imageType = TypeImageName;
+        [self addGesture];
+    }
+    return self;
 }
 
-- (void)zoomImage:(id)sender{
-    if ([(UIPinchGestureRecognizer *)sender state] == UIGestureRecognizerStateEnded)
-    {
-        _lastScale = 1.0;
-        return;
-    }
+- (void)addGesture{
+    self.clipsToBounds = YES;
+    self.contentMode = UIViewContentModeScaleAspectFill;
     
-    CGFloat scale = 1.0 - (_lastScale - [(UIPinchGestureRecognizer *)sender scale]);
-    CGAffineTransform currentTransform = [(UIPinchGestureRecognizer *)sender view].transform;
-    CGAffineTransform newTransform = CGAffineTransformScale(currentTransform, scale, scale);
-    [[(UIPinchGestureRecognizer *)sender view]setTransform:newTransform];
-    _lastScale = [(UIPinchGestureRecognizer *)sender scale];
+    [self addSubview:self.scrollView];
+    
+    //添加单、双击手势
+    UITapGestureRecognizer *doubleTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(doubleTapsAction:)];
+    [doubleTapGesture setNumberOfTapsRequired:HandDoubleTap];
+    [self.scrollView addGestureRecognizer:doubleTapGesture];
+    
+    UITapGestureRecognizer *singleTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(singleTapAction:)];
+    [singleTapGesture setNumberOfTapsRequired:HandOneTap];
+    [self.scrollView addGestureRecognizer:singleTapGesture];
+    
+    self.scrollView.maximumZoomScale = MaxZoomScaleNum;
+    self.scrollView.minimumZoomScale = MinZoomScaleNum;
+    self.scrollView.zoomScale = MinZoomScaleNum;
 }
 
 #pragma mark - ----------External Interface
-- (void)setImage:(id)image atIndex:(NSInteger)index{
-    _index = index;
+- (void)setViewImage:(id)image{
     if ([image isKindOfClass:[UIImage class]])
     {
-        //传过来的是UIImage对象
-        _imageType = TypeImageObject;
-        _image = image;
-        [self setNormalImage];
+        [self setObjectImage:(UIImage *)image];
     }
     else if ([image isKindOfClass:[NSString class]])
     {
         NSString *imagename = image;
-        if ([[imagename.pathExtension lowercaseString] isEqualToString:@"gif"])
+        if ([self isURL:imagename])
         {
-            //传过来的是本地GIF图片名
-            _imageType = TypeImageGIFName;
-            NSData *gifData = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:imagename ofType:nil]];
-            if (gifData != nil)
-            {
-                _gifData = gifData;
-            }
-            _image = [UIImage imageNamed:imagename];
-            [self setNormalImage];
+            [self setURLImage:[NSURL URLWithString:imagename]];
         }
         else
         {
-            //传过来的是本地普通图片名
-            _imageType = TypeImageName;
-            _image = [UIImage imageNamed:imagename];
-            [self setNormalImage];
+            [self setNameImage:imagename];
         }
     }
     else if ([image isKindOfClass:[NSURL class]])
     {
-        NSString *imagePath = [NSHomeDirectory() stringByAppendingString:[NSString stringWithFormat:@"/Documents/%@", [image lastPathComponent]]];
-        
-        //从沙盒下的缓存目录查找图片，未找到则进行网络获取
-        NSData *tempData = [NSData dataWithContentsOfFile:imagePath];
-        if (tempData != nil)
-        {
-            _image = [UIImage imageWithData:tempData];
-            NSString *tempImageType = [self contentTypeForImageData:tempData];
-            if ([[tempImageType lowercaseString] isEqualToString:@"gif"])
-            {
-                _imageType = TypeImageGIFURL;
-                _gifData = tempData;
-            }
-            else
-            {
-                _imageType = TypeImageURL;
-            }
-            [self setNormalImage];
-        }
-        else
-        {
-            dispatch_async(dispatch_queue_create("com.xuqian.image", DISPATCH_QUEUE_CONCURRENT), ^{
-                NSError *error;
-                __block NSData *data = [NSURLConnection sendSynchronousRequest:[NSURLRequest requestWithURL:(NSURL *)image] returningResponse:NULL error:&error];
-
-                dispatch_sync(dispatch_get_main_queue(), ^{
-                    
-                    if (data != nil)
-                    {
-                        _image = [UIImage imageWithData:data];
-                        NSString *imageType = [self contentTypeForImageData:data];
-                        if ([[imageType lowercaseString] isEqualToString:@"gif"])
-                        {
-                            _imageType = TypeImageGIFURL;
-                            _gifData = data;
-                        }
-                        else
-                        {
-                            _imageType = TypeImageURL;
-                        }
-                        [self setNormalImage];
-                        
-                        //缓存下载的图片到沙盒下的cache目录
-                        [data writeToFile:imagePath atomically:YES];
-                    }
-                });
-            });
-        }
+        [self setURLImage:(NSURL *)image];
     }
     else
         return;
 }
 
-- (void)startGifImage{
-    if (self.gifView && self.gifView.gifData)
+#pragma mark - ----------ScrollView的代理方法
+- (UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView{
+    if (_imageView)
     {
-        [self.gifView start];
+        return _imageView;
+    }
+    else if (_gifView)
+    {
+        return _gifView;
+    }
+    return nil;
+}
+
+- (void)scrollViewDidZoom:(UIScrollView *)scrollView{
+    CGFloat Ws = self.scrollView.frame.size.width - self.scrollView.contentInset.left - self.scrollView.contentInset.right;
+    CGFloat Hs = self.scrollView.frame.size.height - self.scrollView.contentInset.top - self.scrollView.contentInset.bottom;
+    if (_imageView)
+    {
+        CGFloat W = _imageView.frame.size.width;
+        CGFloat H = _imageView.frame.size.height;
+        
+        CGRect rct = _imageView.frame;
+        rct.origin.x = MAX((Ws-W)*0.5, 0);
+        rct.origin.y = MAX((Hs-H)*0.5, 0);
+        _imageView.frame = rct;
+    }
+    else if (_gifView)
+    {
+        CGFloat W = _gifView.frame.size.width;
+        CGFloat H = _gifView.frame.size.height;
+        
+        CGRect rct = _gifView.frame;
+        rct.origin.x = MAX((Ws-W)*0.5, 0);
+        rct.origin.y = MAX((Hs-H)*0.5, 0);
+        _gifView.frame = rct;
     }
 }
 
-- (void)suspendGifImage{
-    if (self.gifView && self.gifView.gifData)
+#pragma mark - ----------手势方法
+- (void)doubleTapsAction:(UITapGestureRecognizer *)tap{
+    NSLog(@"双击");
+    if (self.scrollView.minimumZoomScale <= self.scrollView.zoomScale && self.scrollView.maximumZoomScale > self.scrollView.zoomScale)
     {
-        [self.gifView suspend];
+        [self.scrollView setZoomScale:self.scrollView.maximumZoomScale animated:YES];
+    }
+    else
+    {
+        [self.scrollView setZoomScale:self.scrollView.minimumZoomScale animated:YES];
     }
 }
 
-- (ImageType)getImageType
-{
-    return _imageType;
+- (void)singleTapAction:(UITapGestureRecognizer *)tap{
+    NSLog(@"单击");
 }
+
 
 #pragma mark - ----------Private Methods
+#pragma mark -- 设置图片
 - (void)setNormalImage{
     if (_image != nil)
     {
@@ -208,23 +192,115 @@
             }
         }
         
-        self.frame = CGRectMake(0, 0, width, height);
-        self.center = CGPointMake(WINDOW_SCREEN_WIDTH*_index + WINDOW_SCREEN_WIDTH/2.0, WINDOW_SCREEN_HEIGHT/2.0);
         if ((_imageType == TypeImageName) || (_imageType == TypeImageObject) || (_imageType == TypeImageURL))
         {
-            [self setImage:_image];
+            _imageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, width, height)];
+            _imageView.center = CGPointMake(self.frame.size.width/2.0, self.frame.size.height/2.0);
+            [self.scrollView addSubview:_imageView];
+            [_imageView setImage:_image];
         }
         else
         {
             if (_gifData != nil)
             {
-                 self.gifView = [[XPQGifView alloc] initWithGifData:_gifData];
-                self.gifView.frame = self.bounds;
-                [self addSubview:self.gifView];
-                [self.gifView start];
+                _gifView = [[XPQGifView alloc] initWithGifData:_gifData];
+                _gifView.frame = CGRectMake(0, 0, width, height);
+                _gifView.center = CGPointMake(self.frame.size.width/2.0, self.frame.size.height/2.0);
+                [self.scrollView addSubview:_gifView];
+                [_gifView start];
             }
         }
     }
+}
+
+#pragma mark -- 设置根据UIImage对象的图片
+- (void)setObjectImage:(UIImage *)image{
+    _imageType = TypeImageObject;
+    _image = image;
+    [self setNormalImage];
+}
+
+#pragma mark -- 设置根据图片名的图片
+- (void)setNameImage:(NSString *)imagename{
+    if ([[imagename.pathExtension lowercaseString] isEqualToString:@"gif"])
+    {
+        //传过来的是本地GIF图片名
+        _imageType = TypeImageGIFName;
+        NSData *gifData = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:imagename ofType:nil]];
+        if (gifData != nil)
+        {
+            _gifData = gifData;
+        }
+        _image = [UIImage imageNamed:imagename];
+        [self setNormalImage];
+    }
+    else
+    {
+        //传过来的是本地普通图片名
+        _imageType = TypeImageName;
+        _image = [UIImage imageNamed:imagename];
+        [self setNormalImage];
+    }
+}
+
+#pragma mark -- 设置根据图片URL的图片
+- (void)setURLImage:(NSURL *)imageURL{
+    NSString *imagePath = [NSHomeDirectory() stringByAppendingString:[NSString stringWithFormat:@"/Documents/%@", [imageURL lastPathComponent]]];
+    
+    //从沙盒下的缓存目录查找图片，未找到则进行网络获取
+    NSData *tempData = [NSData dataWithContentsOfFile:imagePath];
+    if (tempData != nil)
+    {
+        _image = [UIImage imageWithData:tempData];
+        NSString *tempImageType = [self contentTypeForImageData:tempData];
+        if ([[tempImageType lowercaseString] isEqualToString:@"gif"])
+        {
+            _imageType = TypeImageGIFURL;
+            _gifData = tempData;
+        }
+        else
+        {
+            _imageType = TypeImageURL;
+        }
+        [self setNormalImage];
+    }
+    else
+    {
+        dispatch_async(dispatch_queue_create("com.xuqian.image", DISPATCH_QUEUE_CONCURRENT), ^{
+            NSError *error;
+            __block NSData *data = [NSURLConnection sendSynchronousRequest:[NSURLRequest requestWithURL:imageURL] returningResponse:NULL error:&error];
+            
+            dispatch_sync(dispatch_get_main_queue(), ^{
+                
+                if (data != nil)
+                {
+                    _image = [UIImage imageWithData:data];
+                    NSString *imageType = [self contentTypeForImageData:data];
+                    if ([[imageType lowercaseString] isEqualToString:@"gif"])
+                    {
+                        _imageType = TypeImageGIFURL;
+                        _gifData = data;
+                    }
+                    else
+                    {
+                        _imageType = TypeImageURL;
+                    }
+                    [self setNormalImage];
+                    
+                    //缓存下载的图片到沙盒下的cache目录
+                    [data writeToFile:imagePath atomically:YES];
+                }
+            });
+        });
+    }
+}
+
+#pragma mark -- 判断字符串是否是url
+- (BOOL)isURL:(NSString *)string
+{
+    NSString *regex =@"[a-zA-z]+://[^\\s]*";
+    NSPredicate *urlTest = [NSPredicate predicateWithFormat:@"SELF MATCHES %@",regex];
+    return [urlTest evaluateWithObject:string];
 }
 
 #pragma mark -- 判断网络图片的类型
@@ -278,5 +354,18 @@
     
 }
 
+#pragma mark - ----------Getter
+- (UIScrollView *)scrollView{
+    if (!_scrollView)
+    {
+        _scrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
+        _scrollView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
+        _scrollView.showsHorizontalScrollIndicator = NO;
+        _scrollView.showsVerticalScrollIndicator = NO;
+        _scrollView.delegate = self;
+        _scrollView.bounces = NO;
+    }
+    return _scrollView;
+}
 
 @end

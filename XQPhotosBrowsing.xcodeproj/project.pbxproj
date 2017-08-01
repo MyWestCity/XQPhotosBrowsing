@@ -28,6 +28,7 @@
 		CB4EA5AE1F282688006EEA61 /* 11.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CB4EA5A21F282688006EEA61 /* 11.jpg */; };
 		CB4EA5AF1F282688006EEA61 /* 12.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CB4EA5A31F282688006EEA61 /* 12.jpg */; };
 		CBD47E561F2EE0A400F50B63 /* XPQGifView.m in Sources */ = {isa = PBXBuildFile; fileRef = CBD47E551F2EE0A400F50B63 /* XPQGifView.m */; };
+		CBD47E591F3014F000F50B63 /* XQImageViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = CBD47E581F3014F000F50B63 /* XQImageViewCell.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -59,6 +60,8 @@
 		CB4EA5A31F282688006EEA61 /* 12.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 12.jpg; sourceTree = "<group>"; };
 		CBD47E541F2EE0A400F50B63 /* XPQGifView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XPQGifView.h; sourceTree = "<group>"; };
 		CBD47E551F2EE0A400F50B63 /* XPQGifView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XPQGifView.m; sourceTree = "<group>"; };
+		CBD47E571F3014F000F50B63 /* XQImageViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XQImageViewCell.h; sourceTree = "<group>"; };
+		CBD47E581F3014F000F50B63 /* XQImageViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XQImageViewCell.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -119,6 +122,8 @@
 			children = (
 				CB0C08A71F2AC8930029100C /* XQBigImageViewController.h */,
 				CB0C08A81F2AC8930029100C /* XQBigImageViewController.m */,
+				CBD47E571F3014F000F50B63 /* XQImageViewCell.h */,
+				CBD47E581F3014F000F50B63 /* XQImageViewCell.m */,
 				CB0C08AA1F2AC95D0029100C /* XQImageView.h */,
 				CB0C08AB1F2AC95D0029100C /* XQImageView.m */,
 				CBD47E531F2EE0A400F50B63 /* XPQGifView */,
@@ -240,6 +245,7 @@
 			files = (
 				CB4EA5871F276113006EEA61 /* ViewController.m in Sources */,
 				CB4EA5841F276113006EEA61 /* AppDelegate.m in Sources */,
+				CBD47E591F3014F000F50B63 /* XQImageViewCell.m in Sources */,
 				CB0C08AC1F2AC95D0029100C /* XQImageView.m in Sources */,
 				CBD47E561F2EE0A400F50B63 /* XPQGifView.m in Sources */,
 				CB0C08A91F2AC8930029100C /* XQBigImageViewController.m in Sources */,
