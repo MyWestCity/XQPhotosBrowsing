@@ -94,6 +94,20 @@
         return;
 }
 
+- (void)startGifImage{
+    if (_gifView && !_gifView.isPlay)
+    {
+        [_gifView start];
+    }
+}
+
+- (void)stopGifImage{
+    if (_gifView && _gifView.isPlay)
+    {
+        [_gifView stop];
+    }
+}
+
 #pragma mark - ----------ScrollView的代理方法
 - (UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView{
     if (_imageView)
@@ -147,6 +161,10 @@
 
 - (void)singleTapAction:(UITapGestureRecognizer *)tap{
     NSLog(@"单击");
+    if (self.singleClickBlock)
+    {
+        self.singleClickBlock();
+    }
 }
 
 

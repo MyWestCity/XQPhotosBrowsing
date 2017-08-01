@@ -13,6 +13,8 @@
 {
     XQImageView *_imageView;
 }
+@property (nonatomic,copy) SingleClickBlock singleClickBlock;
+
 /**
  *  brief  初始化tablecell
  *  param  style  风格
@@ -24,4 +26,17 @@
  *  param  image  图片对象（本地图片名、图片URL、UIimage对象）
  */
 - (void)setImage:(id)image;
+
+/**
+ *  brief  开始GIF动画
+ *  param  nil
+ */
+- (void)startGIFAnimation;
+
+/**
+ *  brief  停止GIF动画
+ *  param  nil
+ */
+- (void)stopGIFAnimation;
+
 @end

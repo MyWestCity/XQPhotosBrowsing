@@ -23,7 +23,6 @@
         self.backgroundColor = [UIColor blackColor];
         self.frame = frame;
         self.selectionStyle = UITableViewCellSelectionStyleNone;
-        
     }
     return self;
 }
@@ -33,13 +32,33 @@
     if (_imageView == nil)
     {
         _imageView = [[XQImageView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.height, self.frame.size.width)];
+        __weak XQImageViewCell *weakself = self;
+        _imageView.singleClickBlock = ^{
+            if (weakself.singleClickBlock)
+            {
+                weakself.singleClickBlock();
+            }
+        };
     }
     [self.contentView addSubview:_imageView];
     [_imageView setViewImage:image];
 }
 
-#pragma mark - ----------
+- (void)startGIFAnimation{
+    if (_imageView != nil)
+    {
+        [_imageView startGifImage];
+    }
+}
 
+- (void)stopGIFAnimation{
+    if (_imageView != nil)
+    {
+        [_imageView stopGifImage];
+    }
+}
+
+#pragma mark - ----------
 - (void)setSelected:(BOOL)selected animated:(BOOL)animated {
     [super setSelected:selected animated:animated];
 

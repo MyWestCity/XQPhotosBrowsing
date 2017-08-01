@@ -19,12 +19,25 @@ typedef NS_ENUM(NSUInteger, ImageType){
     TypeImageGIFURL         //gif图片地址
 };
 
-@interface XQImageView : UIView
+typedef void(^SingleClickBlock)();
 
+@interface XQImageView : UIView
+@property (nonatomic,copy) SingleClickBlock singleClickBlock;
 /**
  *  brief  设置要显示的图片
  *  param  image  图片对象（本地图片名、图片URL、UIimage对象）
  */
 - (void)setViewImage:(id)image;
 
+/**
+ *  brief  开始GIF动画
+ *  param  nil
+ */
+- (void)startGifImage;
+
+/**
+ *  brief  开始GIF动画
+ *  param  nil
+ */
+- (void)stopGifImage;
 @end
