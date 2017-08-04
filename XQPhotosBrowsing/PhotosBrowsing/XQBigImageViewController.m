@@ -27,10 +27,13 @@
     //设置状态栏为白色
     [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleLightContent;
     [self.mainTableView reloadData];
-    dispatch_async(dispatch_get_main_queue(), ^{
-        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:_currentIndex inSection:0];
-        [self.mainTableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionNone animated:NO];
-    });
+//    dispatch_async(dispatch_get_main_queue(), ^{
+        if (_currentIndex < [self.mainTableView numberOfRowsInSection:0])
+        {
+            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:_currentIndex inSection:0];
+            [self.mainTableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionTop];
+        }
+//    });
 }
 
 #pragma mark - ----------TableView的代理方法
@@ -40,22 +43,23 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
     static NSString *identifier = @"imageViewCell";
-    XQImageViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];//[tableView dequeueReusableCellWithIdentifier:identifier];
+//    XQImageViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier forIndexPath:indexPath];
+    XQImageViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
     if (nil == cell)
     {
         cell = [[XQImageViewCell alloc] initWithStyle:UITableViewCellStyleDefault frame:CGRectMake(0, 0, self.mainTableView.frame.size.height, self.mainTableView.frame.size.width) reuseIdentifier:identifier];
-        cell.contentView.transform = CGAffineTransformMakeRotation(M_PI / 2);
-        __weak XQBigImageViewController *weakself = self;
-        cell.singleClickBlock = ^{
-            _currentIndex = -1;
-            [weakself stopOtherGifAnimation];
-            
-            /****************
-                单击图片的回调,单击图片的自定义方法从这里开始写
-             ****************/
-            [weakself dismissViewControllerAnimated:YES completion:nil];
-        };
     }
+    cell.contentView.transform = CGAffineTransformMakeRotation(M_PI / 2);
+    __weak XQBigImageViewController *weakself = self;
+    cell.singleClickBlock = ^{
+        _currentIndex = -1;
+        [weakself stopOtherGifAnimation];
+        
+        /****************
+         单击图片的回调,单击图片的自定义方法从这里开始写
+         ****************/
+        [weakself dismissViewControllerAnimated:YES completion:nil];
+    };
     
     if (indexPath.row < [self.arrayImage count])
     {
@@ -102,6 +106,11 @@
             {
                 [cell stopGIFAnimation];
             }
+            
+            if (_currentIndex == -1)
+            {
+                [cell removeFromSuperview];
+            }
         }
     }
 }
@@ -128,9 +137,14 @@
         _mainTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
         _mainTableView.rowHeight = WINDOW_SCREEN_WIDTH;
         _mainTableView.pagingEnabled = YES;
+        [_mainTableView registerClass:[XQImageViewCell class] forCellReuseIdentifier:@"imageViewCell"];
         [self.view addSubview:_mainTableView];
     }
     return _mainTableView;
+}
+
+- (void)viewDidUnload{
+    NSLog(@"exit");
 }
 
 #pragma mark -

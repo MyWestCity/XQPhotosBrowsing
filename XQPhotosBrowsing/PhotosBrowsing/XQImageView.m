@@ -46,6 +46,7 @@
         [self addGesture];
     }
     return self;
+   
 }
 
 - (void)addGesture{
@@ -171,36 +172,17 @@
 #pragma mark - ----------Private Methods
 #pragma mark -- 设置图片
 - (void)setNormalImage{
-    if (_image != nil)
-    {
-        CGFloat width = 0;
-        CGFloat height = 0;
-        if (_image.size.width <= WINDOW_SCREEN_WIDTH)
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        if (_image != nil)
         {
-            if (_image.size.height <= WINDOW_SCREEN_HEIGHT)
+            CGFloat width = 0;
+            CGFloat height = 0;
+            if (_image.size.width <= WINDOW_SCREEN_WIDTH)
             {
-                width = _image.size.width;
-                height = _image.size.height;
-            }
-            else
-            {
-                height = WINDOW_SCREEN_HEIGHT;
-                width = height*_image.size.width/_image.size.height;
-            }
-        }
-        else
-        {
-            if (_image.size.height <= WINDOW_SCREEN_HEIGHT)
-            {
-                width = WINDOW_SCREEN_WIDTH;
-                height = width*_image.size.height/_image.size.width;
-            }
-            else
-            {
-                if ((_image.size.width/_image.size.height) >= (WINDOW_SCREEN_WIDTH/WINDOW_SCREEN_HEIGHT))
+                if (_image.size.height <= WINDOW_SCREEN_HEIGHT)
                 {
-                    width = WINDOW_SCREEN_WIDTH;
-                    height = width*_image.size.height/_image.size.width;
+                    width = _image.size.width;
+                    height = _image.size.height;
                 }
                 else
                 {
@@ -208,27 +190,53 @@
                     width = height*_image.size.width/_image.size.height;
                 }
             }
-        }
-        
-        if ((_imageType == TypeImageName) || (_imageType == TypeImageObject) || (_imageType == TypeImageURL))
-        {
-            _imageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, width, height)];
-            _imageView.center = CGPointMake(self.frame.size.width/2.0, self.frame.size.height/2.0);
-            [self.scrollView addSubview:_imageView];
-            [_imageView setImage:_image];
-        }
-        else
-        {
-            if (_gifData != nil)
+            else
             {
-                _gifView = [[XPQGifView alloc] initWithGifData:_gifData];
-                _gifView.frame = CGRectMake(0, 0, width, height);
-                _gifView.center = CGPointMake(self.frame.size.width/2.0, self.frame.size.height/2.0);
-                [self.scrollView addSubview:_gifView];
-                [_gifView start];
+                if (_image.size.height <= WINDOW_SCREEN_HEIGHT)
+                {
+                    width = WINDOW_SCREEN_WIDTH;
+                    height = width*_image.size.height/_image.size.width;
+                }
+                else
+                {
+                    if ((_image.size.width/_image.size.height) >= (WINDOW_SCREEN_WIDTH/WINDOW_SCREEN_HEIGHT))
+                    {
+                        width = WINDOW_SCREEN_WIDTH;
+                        height = width*_image.size.height/_image.size.width;
+                    }
+                    else
+                    {
+                        height = WINDOW_SCREEN_HEIGHT;
+                        width = height*_image.size.width/_image.size.height;
+                    }
+                }
+            }
+            
+            if ((_imageType == TypeImageName) || (_imageType == TypeImageObject) || (_imageType == TypeImageURL))
+            {
+                _imageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, width, height)];
+                _imageView.center = CGPointMake(self.frame.size.width/2.0, self.frame.size.height/2.0);
+                dispatch_sync(dispatch_get_main_queue(), ^{
+                    [self.scrollView addSubview:_imageView];
+                    [_imageView setImage:_image];
+                });
+            }
+            else
+            {
+                if (_gifData != nil)
+                {
+                    _gifView = [[XPQGifView alloc] initWithGifData:_gifData];
+                    _gifView.frame = CGRectMake(0, 0, width, height);
+                    _gifView.center = CGPointMake(self.frame.size.width/2.0, self.frame.size.height/2.0);
+                    dispatch_sync(dispatch_get_main_queue(), ^{
+                        [self.scrollView addSubview:_gifView];
+                        [_gifView start];
+                    });
+                }
             }
         }
-    }
+        
+    });
 }
 
 #pragma mark -- 设置根据UIImage对象的图片
